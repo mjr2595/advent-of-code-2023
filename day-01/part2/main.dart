@@ -1,38 +1,65 @@
-import 'dart:io';
 import 'dart:convert';
-import 'dart:async';
+import 'dart:io';
 
 void main() async {
-  final file = File('test_input.txt');
-  Stream<String> lines = file
-      .openRead()
-      .transform(utf8.decoder) // Decode bytes to UTF-8.
-      .transform(LineSplitter()); // Convert stream to individual lines.
+  final file = File('../input.txt');
+  Stream<String> lines =
+      file.openRead().transform(utf8.decoder).transform(LineSplitter());
+
   try {
-    num total = 0;
+    var total = 0;
     await for (var line in lines) {
-      num lineAmount = getLineAmount(line) ?? 0;
-      total += lineAmount;
-      print('$line: ${lineAmount}, total: ${total}');
+      var numbers = _extractNumbersFromLine(line);
+      if (numbers.isNotEmpty) {
+        total += _calculateSum(numbers);
+      }
+      print('$line: ${numbers}, running total: ${total}');
     }
   } catch (e) {
-    print('Error: $e');
+    print(e);
   }
 }
 
-// Strip away the letters from the string, then add up the last two numbers.
-getLineAmount(String line) {
-  if (line.isEmpty) return null;
-
-  String stringifiedNums = '';
+List<int> _extractNumbersFromLine(String line) {
+  var concatenated = '';
+  List<int> numbers = [];
   line.split('').forEach((ch) {
-    if (int.tryParse(ch) != null) {
-      stringifiedNums += ch;
+    concatenated += ch;
+    final fromWord = _convertWordToNumber(concatenated);
+    if (fromWord != null) {
+      numbers.add(fromWord);
+    } else {
+      final fromChar = int.tryParse(ch);
+      if (fromChar != null) {
+        numbers.add(fromChar);
+      }
     }
   });
-  if (stringifiedNums.length > 0) {
-    stringifiedNums =
-        stringifiedNums[0] + stringifiedNums[stringifiedNums.length - 1];
-    return int.parse(stringifiedNums);
+  return numbers;
+}
+
+int? _convertWordToNumber(String text) {
+  final words = {
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9
+  };
+  for (final entry in words.entries) {
+    if (text.length - entry.key.length >= 0 &&
+        text.substring(text.length - entry.key.length) == entry.key) {
+      return entry.value;
+    }
   }
+  return null;
+}
+
+int _calculateSum(List<int> numbers) {
+  String joined = '${numbers.first}${numbers.last}';
+  return int.parse(joined);
 }
